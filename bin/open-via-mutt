@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+"""
+Open an email message in mutt/neomutt given the message-id. Uses notmuch if available. If notmuch is not available, tries to open in default folder.
+"""
+
+import argparse
+import os
+import subprocess
+import sys
+
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description="Opens mutt and points to given email"
+    )
+    parser.add_argument('-m', '--mutt', default='mutt', choices=('mutt', 'neomutt'))
+    parser.add_argument('message_id', help='Should include the enclosing <>')
+    return parser.parse_args()
+
+
+
+def get_mailboxes():
+    POSS_MUTTRC_PATHS = (
+            os.path.expandvars('$XDG_CONFIG_HOME/neomutt/neomuttrc'),
+            os.path.expandvars('$XDG_CONFIG_HOME/neomutt/muttrc'),
+            os.path.expandvars('$XDG_CONFIG_HOME/mutt/neomuttrc'),
+            os.path.expandvars('$XDG_CONFIG_HOME/mutt/muttrc'),
+            os.path.expanduser('~/.neomutt/neomuttrc'),
+            os.path.expanduser('~/.neomutt/muttrc'),
+            os.path.expanduser('~/.mutt/neomuttrc'),
+            os.path.expanduser('~/.mutt/muttrc'),
+            os.path.expanduser('~/.neomuttrc'),
+            os.path.expanduser('~/.muttrc'),
+            )
+
+    for path in POSS_MUTTRC_PATHS:
+        if os.path.exists(path):
+            with open(path) as f:
+                lines = [line.strip() for line in f.readlines()]
+                lines = [l for l in lines if l.startswith('mailboxes ')]
+                if len(lines) != 1:
+                    raise Exception("Could not parse muttrc")
+                line = lines[0]
+                mailboxes = line[len('mailboxes '):].strip().split()
+                return mailboxes
+
+
+    raise Exception("Could not open muttrc")
+
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+
+    # len(s1) >= len(s2)
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
+            deletions = current_row[j] + 1       # than s2
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    
+    return previous_row[-1]
+
+
+def try_get_folder(args):
+    """
+    Returns None if not possible (because notmuch is not installed or muttrc could not be parsed).
+    """
+    try:
+        import notmuch
+        db = notmuch.Database()
+        message = db.find_message(args.message_id[1:-1])
+
+        mailboxes = get_mailboxes()
+        msg_path = message.get_filename()
+        folder = sorted(mailboxes, key=lambda mbox: levenshtein(mbox, msg_path))[0]
+        return folder
+
+    except:
+        return None
+
+
+def main():
+    args = get_args()
+    folder = try_get_folder(args)
+    subprocess.run(
+            '{} {}{}'.format(
+                args.mutt,
+                '-f {} '.format(folder) if folder else '',
+                "-e 'push \"<limit>~i {}<enter><enter>\"'".format(args.message_id)),
+            shell=True, check=True
+            )
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        sys.exit(2)

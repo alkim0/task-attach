@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+"""
+Creates a new task with the given message as annotation attachment.
+
+TODO: Have an option to add to existing task
+"""
+
+import argparse
+import email
+import sys
+
+from tasklib import TaskWarrior, Task
+
+from task_attach.add import add as add_annotation
+from task_attach.config import Config
+from task_attach.utils import MAIL
+
+
+def get_args():
+    parser = argparse.ArgumentParser(
+            description='Creates a task with given message and annotates the task with message id'
+    )
+    return parser.parse_args()
+
+
+def get_task_description(message):
+    default = 'Reply to "{}" from {}'.format(
+            message['subject'], message['from'])
+    description = input('Enter task description or press enter for default: ')
+    return description if description else default
+
+
+def main():
+    try:
+        args = get_args()
+        config = Config()
+        message = email.message_from_file(sys.stdin)
+        sys.stdin = open('/dev/tty')
+        description = get_task_description(message)
+        tw = TaskWarrior(config.task_home)
+        task = Task(tw, description=description)
+        task.save()
+        add_annotation(str(task['id']), MAIL, message['message-id'], [])
+    except Exception as e:
+        print(e)
+        sys.exit(2)
+
+if __name__ == "__main__":
+    main()
