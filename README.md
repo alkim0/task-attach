@@ -1,11 +1,11 @@
-# *task-attach*
-*task-attach* is a set of utility scripts to manage attachments in TaskWarrior. Currently, TaskWarrior has no built-in support for attaching external files or resources to tasks (via annotations), and *task-attach* hopes to address this problem. *task-attach* is inspired the by the [*taskopen*](https://github.com/ValiValpas/taskopen) script, but has the following additional features:
+# **task-attach**
+**task-attach** is a set of utility scripts to manage attachments in TaskWarrior. Currently, TaskWarrior has no built-in support for attaching external files or resources to tasks (via annotations), and **task-attach** hopes to address this problem. **task-attach** is inspired the by the [**taskopen**](https://github.com/ValiValpas/taskopen) script, but has the following additional features:
 - Support for attachments other than files (i.e., urls and emails)
 - A `mutt2task` script which helps you create tasks from emails
 - A `open-via-mutt` script which opens mutt and jumps to the email corresponding to the given message-id.
 
 ## Installation
-To install *task-attach*, simply run:
+To install **task-attach**, simply run:
 ```
 pip install task-attach
 ```
@@ -18,7 +18,7 @@ This installs the scripts:
 
 
 ## Configuration
-Upon the first run of any of the `task-attach-*` scripts, a config file will be created at `$XDG_CONFIG_HOME/task-attach/config.yaml`. For specific configuration options, please see the generated file.
+Upon the first run of any of the `task-attach-**` scripts, a config file will be created at `$XDG_CONFIG_HOME/task-attach/config.yaml`. For specific configuration options, please see the generated file.
 
 
 ## task-attach-add
