@@ -86,9 +86,9 @@ This script is meant to be called from within mutt to quickly create a task base
 ## Putting it all together
 For my setup, I have the following aliases:
 ```
-task config alias.attach "exec $(which task-attach-add)"
-task config alias.note "exec $(which task-attach-new)"
-task config alias.open "exec $(which task-attach-open)"
+task config alias.attach "exec '$(which task-attach-add)'"
+task config alias.note "exec '$(which task-attach-new)'"
+task config alias.open "exec '$(which task-attach-open)'"
 ```
 
 In my muttrc, I have:
